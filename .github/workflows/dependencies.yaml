@@ -21,7 +21,7 @@ name: Check Dependencies
 
 on:
   push:
-    branches: [main]
+    branches: [testing-main]
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
