@@ -24,10 +24,12 @@ on:
     branches: [testing-main]
     paths:
       - yarn.lock
+      - DEPENDENCIES
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - yarn.lock
+      - DEPENDENCIES
   workflow_dispatch:
 
 jobs:
@@ -35,37 +37,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.7
-
-      - name: Check if yarn.lock changed in the latest commit
-        id: yarn-lock-changed
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep -q '^yarn.lock$'; then
-            echo "yarn.lock has changed"
-            echo "yarn_lock_changed=true" >> $GITHUB_ENV
-          else
-            echo "yarn.lock has not changed"
-            echo "yarn_lock_changed=false" >> $GITHUB_ENV
-          fi
-
       - name: Set up JDK 17
-        if: env.yarn_lock_changed == 'true'
         uses: actions/setup-java@b36c23c0d998641eff861008f374ee103c25ac73 # v4.4.0
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
       - name: Download Eclipse Dash Tool
-        if: env.yarn_lock_changed == 'true'
         run: curl -L --output ./org.eclipse.dash.licenses.jar 'https://repo.eclipse.org/service/local/artifact/maven/redirect?r=dash-licenses&g=org.eclipse.dash&a=org.eclipse.dash.licenses&v=LATEST'
 
       - name: Generate Dependencies file
-        if: env.yarn_lock_changed == 'true'
         run: java -jar ./org.eclipse.dash.licenses.jar yarn.lock -project automotive.tractusx -summary DEPENDENCIES || true
 
       - name: Check if dependencies were changed
-        if: env.yarn_lock_changed == 'true'
         id: dependencies-changed
         run: |
           changed=$(git diff DEPENDENCIES)
@@ -78,22 +65,22 @@ jobs:
           fi
 
       - name: Check for restricted dependencies
-        if: env.yarn_lock_changed == 'true' && steps.dependencies-changed.outputs.changed == 'true'
         run: |
           restricted=$(grep ' restricted,' DEPENDENCIES || true)
           if [[ -n "$restricted" ]]; then
             echo "The following dependencies are restricted: $restricted"
             exit 1
           fi
+        if: steps.dependencies-changed.outputs.changed == 'true'
 
       - name: Upload DEPENDENCIES file
-        if: env.yarn_lock_changed == 'true' && steps.dependencies-changed.outputs.changed == 'true'
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           path: DEPENDENCIES
+        if: steps.dependencies-changed.outputs.changed == 'true'
 
       - name: Signal need to update DEPENDENCIES
-        if: env.yarn_lock_changed == 'true' && steps.dependencies-changed.outputs.changed == 'true'
         run: |
           echo "Dependencies need to be updated (updated DEPENDENCIES file has been uploaded to workflow run)"
           exit 1
+        if: steps.dependencies-changed.outputs.changed == 'true'
