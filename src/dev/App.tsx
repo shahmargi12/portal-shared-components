@@ -61,8 +61,8 @@ const cardsArgs = {
 }
 
 export default function App() {
-  const [view, setView] = useState<ViewType>(ViewType.ALL)
   const [count, setCount] = useState<number>(1)
+  const [view, setView] = useState<ViewType>(ViewType.ALL)
 
   return (
     <main style={{ padding: 80 }}>
