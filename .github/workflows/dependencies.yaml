@@ -21,9 +21,13 @@ name: Check Dependencies
 
 on:
   push:
-    branches: [main]
+    branches: [testing-main]
+    paths:
+      - yarn.lock
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - yarn.lock
   workflow_dispatch:
 
 jobs:
