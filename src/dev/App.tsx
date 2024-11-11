@@ -64,7 +64,6 @@ export default function App() {
   const [count, setCount] = useState<number>(1)
   const [view, setView] = useState<ViewType>(ViewType.ALL)
 
-  console.log('object')
   return (
     <main style={{ padding: 80 }}>
       <Button
